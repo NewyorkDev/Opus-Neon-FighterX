@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opus Neon Fighter X</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a0033 100%);
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 30px #00ffff, inset 0 0 30px rgba(0, 255, 255, 0.1);
+        }
+        
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            color: #00ffff;
+            font-size: 18px;
+            text-shadow: 0 0 10px #00ffff;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            display: none;
+        }
+        
+        #healthBar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 20px;
+            border: 2px solid #00ffff;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+        
+        #healthFill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00);
+            transition: width 0.3s;
+            width: 100%;
+        }
+        
+        #pauseMenu {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .menuButton {
+            padding: 5px 10px;
+            font-size: 14px;
+            font-family: 'Orbitron', monospace;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        
+        .menuButton:hover {
+            background: #00ffff;
+            color: #000;
+        }
+        
+        #introScreen, #storyScreen, #launchScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            z-index: 200;
+        }
+        
+        #introScreen img, #storyScreen img, #launchScreen img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ffff;
+            text-align: center;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        #startScreen h1 {
+            font-size: 72px;
+            margin: 0;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        #startScreen .subtitle {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #ff00ff;
+            text-shadow: 0 0 15px #ff00ff;
+        }
+        
+        .ship-selection {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            max-width: 90%;
+        }
+        
+        .ship-selection h3 {
+            margin: 0 0 20px 0;
+            color: #ffff00;
+            font-size: 24px;
+        }
+        
+        .ships {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .ship-option {
+            padding: 15px;
+            border: 2px solid #666;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .ship-option:hover {
+            border-color: #00ffff;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        .ship-option.selected {
+            border-color: #00ff00;
+            box-shadow: 0 0 30px #00ff00;
+        }
+        
+        .ship-preview {
+            width: 100px;
+            height: 80px;
+            margin: 0 auto 10px;
+            position: relative;
+        }
+        
+        .ship-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .ship-name {
+            font-size: 16px;
+            color: #00ffff;
+            margin-bottom: 5px;
+        }
+        
+        .ship-stats {
+            font-size: 12px;
+            color: #aaa;
+            text-align: left;
+        }
+        
+        .ship-stats div {
+            margin: 2px 0;
+        }
+        
+        .stat-bar {
+            display: inline-block;
+            width: 60px;
+            height: 8px;
+            background: #333;
+            border: 1px solid #666;
+            margin-left: 5px;
+            position: relative;
+        }
+        
+        .stat-fill {
+            height: 100%;
+            background: #00ff00;
+        }
+        
+        #controls {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            font-size: 12px;
+        }
+        
+        #controls h3 {
+            margin: 0 0 10px 0;
+            color: #ffff00;
+        }
+        
+        #gameOver, #levelComplete, #victory {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border: 2px solid #00ffff;
+            border-radius: 20px;
+        }
+        
+        .message {
+            font-size: 48px;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff;
+            margin-bottom: 20px;
+            animation: pulse 1s infinite;
+        }
+        
+        .subtext {
+            font-size: 24px;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            margin: 10px 0;
+        }
+        
+        button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-family: 'Orbitron', monospace;
+            background: transparent;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        button:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 20px #00ffff;
+            transform: scale(1.1);
+        }
+        
+        #soundToggle {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 10px;
+            font-size: 14px;
+            z-index: 100;
+        }
+        
+        #powerUpIndicator {
+            position: absolute;
+            bottom: 50px;
+            left: 10px;
+            color: #ffff00;
+            font-size: 14px;
+            text-shadow: 0 0 10px #ffff00;
+            display: none;
+        }
+        
+        #specialAbilityBar {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 10px;
+            border: 1px solid #ff00ff;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+        
+        #specialAbilityFill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff00ff, #ffff00);
+            width: 100%;
+            transition: width 0.1s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes glow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.3); }
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        #skipButton {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            z-index: 201;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="introScreen">
+            <img src="assets/screens/intro.png" alt="Opus Neon Fighter X">
+            <button id="skipButton" onclick="skipToMenu()">Skip</button>
+        </div>
+        
+        <div id="storyScreen" style="display: none;">
+            <img src="assets/screens/story1.png" alt="Story">
+            <button id="skipButton" onclick="skipToMenu()">Skip</button>
+        </div>
+        
+        <div id="launchScreen" style="display: none;">
+            <img src="assets/screens/launch.png" alt="Launch Sequence">
+        </div>
+        
+        <div id="ui">
+            <div>Score: <span id="score">0</span></div>
+            <div>Level: <span id="level">1</span></div>
+            <div>Lives: <span id="lives">3</span></div>
+        </div>
+        
+        <div id="pauseMenu">
+            <button class="menuButton" onclick="togglePause()">PAUSE</button>
+            <button class="menuButton" onclick="backToMenu()">MENU</button>
+        </div>
+        
+        <div id="healthBar">
+            <div id="healthFill"></div>
+        </div>
+        
+        <div id="specialAbilityBar">
+            <div id="specialAbilityFill"></div>
+        </div>
+        
+        <div id="powerUpIndicator"></div>
+        
+        <div id="startScreen">
+            <h1>OPUS NEON FIGHTER X</h1>
+            <div class="subtitle">Choose Your Fighter!</div>
+            
+            <div class="ship-selection">
+                <h3>SELECT YOUR SHIP</h3>
+                <div class="ships" id="shipGrid">
+                    <!-- Ships will be dynamically generated -->
+                </div>
+            </div>
+            
+            <div id="controls">
+                <h3>CONTROLS</h3>
+                <p>← → Arrow Keys: Move | SPACE: Fire | 0: Special Ability</p>
+                <p>ESC: Pause Game | Power-ups stack until hit!</p>
+            </div>
+            
+            <button onclick="startGame()" id="startButton" disabled>SELECT A SHIP TO BEGIN</button>
+        </div>
+        
+        <div id="gameOver">
+            <div class="message">GAME OVER</div>
+            <div class="subtext" id="gameOverReason"></div>
+            <div class="subtext">Final Score: <span id="finalScore">0</span></div>
+            <button onclick="resetGame()">Play Again</button>
+            <button onclick="backToMenu()">Main Menu</button>
+        </div>
+        
+        <div id="levelComplete">
+            <div class="message">LEVEL COMPLETE!</div>
+            <div class="subtext">Prepare for Level <span id="nextLevel">2</span></div>
+            <button onclick="nextLevel()">Continue</button>
+            <button onclick="backToMenu()">Main Menu</button>
+        </div>
+        
+        <div id="victory">
+            <div class="message">VICTORY!</div>
+            <div class="subtext">You saved Earth!</div>
+            <div class="subtext">Final Score: <span id="victoryScore">0</span></div>
+            <button onclick="resetGame()">Play Again</button>
+            <button onclick="backToMenu()">Main Menu</button>
+        </div>
+        
+        <button id="soundToggle" onclick="toggleSound()">🔊 Sound: ON</button>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
