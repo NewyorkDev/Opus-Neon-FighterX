@@ -1,6 +1,6 @@
 # Opus Neon Fighter X
 
-A retro-futuristic full-screen space shooter game with 6 unique ships, special abilities, smart AI allies, and epic boss battles!
+A retro-futuristic full-screen space shooter game featuring 6 unique ships, special abilities, smart AI allies, epic boss battles, and an endless mode with unique enemy types!
 
 ## How to Play
 
@@ -54,9 +54,11 @@ A retro-futuristic full-screen space shooter game with 6 unique ships, special a
 - **Full Screen Gameplay**: Immersive full-screen experience
 - **Power-up Stacking**: Collect multiple power-ups that persist until you're hit
 - **Smart Infiltrator Allies**: AI ships that appear behind you and intelligently attack enemies
-- **Octopus Boss**: Epic final boss with tentacle attacks and multiple phases
-- **Balanced Difficulty**: Challenging but fair gameplay progression
-- **Retro Sound Effects**: Generated using Web Audio API
+- **Octopus Boss**: Epic final boss with tentacle attacks, multiple phases, and power-up drops
+- **Endless Mode**: After defeating the boss, enter a black hole to fight endless waves
+- **8 Enemy Types**: Including kamikaze, splitter, sniper, and shielder enemies
+- **Dynamic Music**: Epic boss music and unique tracks for each level
+- **Project 52 Intro**: Game designer credit screen at startup
 - **6 Unique Ships**: Each with distinct abilities and playstyles
 
 ## Power-ups
@@ -68,12 +70,34 @@ A retro-futuristic full-screen space shooter game with 6 unique ships, special a
 - **+** - Health
 - **D** - Double Damage
 
+## Endless Mode Enemies
+
+After defeating the octopus boss, you enter the endless mode with new enemy types:
+
+### Kamikaze
+- Red triangular ships that track your position
+- Low health but dangerous on contact
+
+### Splitter
+- Cyan enemies that split into 3 smaller enemies when destroyed
+- Medium health, moderate threat
+
+### Sniper
+- White enemies that stop mid-screen and fire accurate shots
+- High damage projectiles
+
+### Shielder
+- Blue enemies with regenerating shields
+- Must break shield before damaging
+
 ## Tips
 
 - Power-ups stack! Collect as many as you can
 - Each ship has unique strengths - experiment to find your favorite
 - Watch out for infiltrators on level 2+ - they appear behind you!
-- The boss has 3 attack phases based on health
+- The boss drops power-ups during the fight
+- In endless mode, enemies come in waves - prepare for increasing difficulty
+- Score 10,000+ points in endless mode to achieve victory
 - Use your special ability wisely - it has a cooldown
 
 ## Browser Requirements

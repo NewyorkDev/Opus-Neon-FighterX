@@ -8,22 +8,42 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 // Handle window resize
-window.addEventListener('resize', () => {
+function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-});
-
-// Create starfield background
-for (let i = 0; i < 100; i++) {
-    const star = document.createElement('div');
-    star.className = 'star';
-    star.style.width = Math.random() * 3 + 'px';
-    star.style.height = star.style.width;
-    star.style.left = Math.random() * window.innerWidth + 'px';
-    star.style.top = Math.random() * window.innerHeight + 'px';
-    star.style.animationDelay = Math.random() * 3 + 's';
-    gameContainer.appendChild(star);
+    
+    // Recreate starfield for new dimensions
+    createStarfield();
+    
+    // Update player position if it's off screen (only if player exists)
+    if (typeof player !== 'undefined' && player && player.x > canvas.width - player.width) {
+        player.x = canvas.width - player.width;
+    }
 }
+
+window.addEventListener('resize', resizeCanvas);
+
+// Create starfield background function
+function createStarfield() {
+    // Clear existing stars
+    const existingStars = document.querySelectorAll('.star');
+    existingStars.forEach(star => star.remove());
+    
+    // Create more stars for better coverage
+    for (let i = 0; i < 150; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.width = Math.random() * 3 + 'px';
+        star.style.height = star.style.width;
+        star.style.left = Math.random() * window.innerWidth + 'px';
+        star.style.top = Math.random() * window.innerHeight + 'px';
+        star.style.animationDelay = Math.random() * 3 + 's';
+        gameContainer.appendChild(star);
+    }
+}
+
+// Initial starfield creation
+createStarfield();
 
 // Ship types with unique abilities
 const shipTypes = {
@@ -101,6 +121,7 @@ const shipTypes = {
         special: 'chargedPlasma',
         width: 60,
         height: 45,
+        image: 'assets/ships/stricker.png',
         stats: { speed: 60, shield: 50, power: 90 },
         description: 'Charges powerful plasma shots'
     },
@@ -116,6 +137,7 @@ const shipTypes = {
         specialCooldown: 10000,
         width: 50,
         height: 35,
+        image: 'assets/ships/other.png',
         stats: { speed: 90, shield: 30, power: 70 },
         description: 'Phase through enemy bullets'
     }
@@ -195,18 +217,58 @@ function playPulseCannonSound() {
     }
 }
 
-// Level-specific background music
+// Enhanced level-specific background music
 function playBackgroundMusic(level) {
     if (!soundEnabled || !audioContext) return;
     
-    const levelPatterns = [
-        [130.81, 146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63], // Level 1
-        [146.83, 164.81, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63], // Level 2
-        [98.00, 110.00, 123.47, 130.81, 146.83, 164.81, 196.00, 220.00]   // Level 3 (boss)
-    ];
+    const musicData = {
+        1: { // Level 1 - Heroic theme
+            melody: [130.81, 146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63],
+            bass: [65.41, 73.42, 82.41, 87.31, 98.00, 110.00, 123.47, 130.81],
+            harmony: [196.00, 220.00, 246.94, 261.63, 293.66, 329.63, 369.99, 392.00],
+            tempo: 220,
+            waveType: 'sine'
+        },
+        2: { // Level 2 - Rising tension
+            melody: [146.83, 164.81, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63],
+            bass: [73.42, 82.41, 98.00, 110.00, 123.47, 130.81, 146.83, 164.81],
+            harmony: [293.66, 329.63, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25],
+            tempo: 180,
+            waveType: 'triangle'
+        },
+        3: { // Level 3 - Boss battle (intense)
+            melody: [98.00, 110.00, 123.47, 130.81, 146.83, 164.81, 196.00, 220.00],
+            bass: [49.00, 55.00, 61.74, 65.41, 73.42, 82.41, 98.00, 110.00],
+            harmony: [196.00, 220.00, 246.94, 261.63, 293.66, 329.63, 392.00, 440.00],
+            tempo: 120,
+            waveType: 'sawtooth'
+        },
+        4: { // Shmup Stage 1 - Space adventure
+            melody: [196.00, 220.00, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00],
+            bass: [98.00, 110.00, 123.47, 130.81, 146.83, 164.81, 174.61, 196.00],
+            harmony: [392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99],
+            tempo: 160,
+            waveType: 'sine'
+        },
+        5: { // Shmup Stage 2 - Deep space
+            melody: [220.00, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00, 440.00],
+            bass: [110.00, 123.47, 130.81, 146.83, 164.81, 174.61, 196.00, 220.00],
+            harmony: [440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00],
+            tempo: 140,
+            waveType: 'triangle'
+        },
+        6: { // Shmup Stage 3 - Final assault
+            melody: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25],
+            bass: [130.81, 146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63],
+            harmony: [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50],
+            tempo: 110,
+            waveType: 'sawtooth'
+        }
+    };
     
-    const notes = levelPatterns[Math.min(level - 1, 2)];
+    const music = musicData[Math.min(level, 6)] || musicData[1];
     let noteIndex = 0;
+    let beatCounter = 0;
     
     if (window.musicInterval) {
         clearInterval(window.musicInterval);
@@ -214,13 +276,45 @@ function playBackgroundMusic(level) {
     
     window.musicInterval = setInterval(() => {
         if (soundEnabled && gameRunning && !paused) {
-            playSound(notes[noteIndex], 0.1, 'sine', 0.05);
-            if (level === 3) {
-                playSound(notes[noteIndex] / 2, 0.15, 'triangle', 0.03);
+            // Main melody
+            playSound(music.melody[noteIndex], 0.08, music.waveType, 0.1);
+            
+            // Bass line (plays every other beat)
+            if (beatCounter % 2 === 0) {
+                playSound(music.bass[noteIndex], 0.06, 'triangle', 0.15);
             }
-            noteIndex = (noteIndex + 1) % notes.length;
+            
+            // Harmony (plays every 4th beat)
+            if (beatCounter % 4 === 0) {
+                playSound(music.harmony[noteIndex], 0.04, 'sine', 0.08);
+            }
+            
+            // Special effects for boss battle
+            if (level === 3 || boss) {
+                // Dramatic low frequency rumble
+                playSound(music.bass[noteIndex] / 4, 0.12, 'sawtooth', 0.05);
+                // Piercing high notes
+                if (beatCounter % 8 === 0) {
+                    playSound(music.melody[noteIndex] * 2, 0.03, 'square', 0.02);
+                }
+            }
+            
+            // Special effects for shmup mode (levels 4-6)
+            if (level >= 4) {
+                // Cosmic ambience
+                if (beatCounter % 6 === 0) {
+                    playSound(music.harmony[noteIndex] * 1.5, 0.02, 'sine', 0.2);
+                }
+                // Pulse effect
+                if (beatCounter % 16 === 0) {
+                    playSound(music.bass[noteIndex] / 2, 0.08, 'triangle', 0.3);
+                }
+            }
+            
+            noteIndex = (noteIndex + 1) % music.melody.length;
+            beatCounter++;
         }
-    }, 200);
+    }, music.tempo);
 }
 
 function toggleSound() {
@@ -248,11 +342,26 @@ let enemySpeed = 0.5;
 let dropSpeed = 10;
 let chargeLevel = 0;
 let charging = false;
+let endlessMode = false;
+let currentWave = 0;
+let enemyWaveSpawnTimer = 0;
+let shmupMode = false;
+let shmupStage = 1;
+let shmupRound = 1;
+let shmupEnemies = [];
+let shmupBackground = null;
+let backgroundY = 0;
+let backgroundStars = [];
+let backgroundClouds = [];
+let backgroundPlanets = [];
+let backgroundDebris = [];
+let shmupWaveSpawned = false;
+let shmupStageTimer = 0;
 
 // Player object
 let player = {
-    x: window.innerWidth / 2 - 30,
-    y: window.innerHeight - 80,
+    x: canvas.width / 2 - 30,
+    y: canvas.height - 80,
     width: 60,
     height: 40,
     speed: 5,
@@ -272,6 +381,10 @@ let player = {
     image: null
 };
 
+// Now that player is defined, ensure proper canvas sizing
+resizeCanvas();
+
+
 // Power-up types
 const powerUpTypes = {
     rapidFire: { color: '#ffff00', symbol: 'R', duration: -1 },
@@ -288,6 +401,55 @@ const enemyTypes = {
     fast: { health: 1, points: 20, color: '#ffff00', speed: 2 },
     tank: { health: 3, points: 30, color: '#ff00ff', speed: 0.5 },
     shooter: { health: 2, points: 25, color: '#ff8800', speed: 1, shootRate: 0.015 }
+};
+
+// Shmup enemy types
+const shmupEnemyTypes = {
+    smallPlane: { 
+        health: 2, points: 30, speed: 2, 
+        image: 'assets/enemies/r2-small-one.png',
+        movePattern: 'straight', fireRate: 0.02
+    },
+    bigPlane: { 
+        health: 5, points: 50, speed: 1, 
+        image: 'assets/enemies/r2-big-plane.png',
+        movePattern: 'sine', fireRate: 0.015
+    },
+    circleEnemy: { 
+        health: 3, points: 40, speed: 1.5, 
+        image: 'assets/enemies/r2-circle.png',
+        movePattern: 'circle', fireRate: 0.01
+    },
+    complexCircle: { 
+        health: 4, points: 60, speed: 1.2, 
+        image: 'assets/enemies/r2-complex-circle.png',
+        movePattern: 'complex', fireRate: 0.02
+    },
+    blackOrange: { 
+        health: 3, points: 45, speed: 2.5, 
+        image: 'assets/enemies/r2-black-orange.png',
+        movePattern: 'dive', fireRate: 0.025
+    },
+    niceRed: { 
+        health: 6, points: 70, speed: 1, 
+        image: 'assets/enemies/r2-nice-red.png',
+        movePattern: 'hover', fireRate: 0.03
+    },
+    tripleEnemy: { 
+        health: 4, points: 80, speed: 1.8, 
+        image: 'assets/enemies/r2-the-3.png',
+        movePattern: 'formation', fireRate: 0.02
+    },
+    spaceStation: { 
+        health: 15, points: 200, speed: 0.5, 
+        image: 'assets/enemies/r2-fixed-space-station.png',
+        movePattern: 'station', fireRate: 0.04
+    },
+    sideShooter: { 
+        health: 8, points: 100, speed: 1.5, 
+        image: 'assets/enemies/r2-fixed-left-side-top.png',
+        movePattern: 'side', fireRate: 0.035
+    }
 };
 
 // Input handling
@@ -386,6 +548,7 @@ function drawShipPreview(shipType, canvasId) {
     }
 }
 
+// Ship selection handler (new robust version)
 // Ship selection
 function selectShip(type) {
     selectedShip = type;
@@ -399,19 +562,26 @@ function selectShip(type) {
 
 // Intro sequence
 function startIntroSequence() {
+    // Show Project 52 first
     setTimeout(() => {
-        document.getElementById('introScreen').style.display = 'none';
-        document.getElementById('storyScreen').style.display = 'flex';
+        document.getElementById('project52Screen').style.display = 'none';
+        document.getElementById('introScreen').style.display = 'flex';
         
         setTimeout(() => {
-            document.getElementById('storyScreen').style.display = 'none';
-            document.getElementById('startScreen').style.display = 'flex';
-            introSequenceComplete = true;
+            document.getElementById('introScreen').style.display = 'none';
+            document.getElementById('storyScreen').style.display = 'flex';
+            
+            setTimeout(() => {
+                document.getElementById('storyScreen').style.display = 'none';
+                document.getElementById('startScreen').style.display = 'flex';
+                introSequenceComplete = true;
+            }, 3000);
         }, 3000);
     }, 3000);
 }
 
 function skipToMenu() {
+    document.getElementById('project52Screen').style.display = 'none';
     document.getElementById('introScreen').style.display = 'none';
     document.getElementById('storyScreen').style.display = 'none';
     document.getElementById('startScreen').style.display = 'flex';
@@ -439,11 +609,11 @@ function createEnemies(level) {
     enemyFighters = [];
     infiltrators = [];
     const types = ['basic', 'fast', 'tank', 'shooter'];
-    const rows = 3 + Math.floor(level / 2);
-    const cols = 8;
+    const rows = 4 + Math.floor(level / 2); // More enemies from start
+    const cols = 10; // More columns
     
-    enemySpeed = 0.5 + (level - 1) * 0.2;
-    dropSpeed = 10 + (level - 1) * 5;
+    enemySpeed = 0.8 + (level - 1) * 0.3; // Faster from start
+    dropSpeed = 15 + (level - 1) * 5; // Faster drop
     
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -480,7 +650,7 @@ function createEnemies(level) {
     
     // Add infiltrators on level 2+
     if (level >= 2) {
-        const infiltratorCount = level - 1;
+        const infiltratorCount = level - 1; // Level 2: 1 infiltrator, Level 3: 2 infiltrators
         for (let i = 0; i < infiltratorCount; i++) {
             infiltrators.push({
                 x: canvas.width / 2 + (i - 0.5) * 100,
@@ -509,9 +679,9 @@ function createBoss() {
         y: -200,
         width: 300,
         height: 250,
-        health: 60,
-        maxHealth: 60,
-        speed: 1,
+        health: 120,
+        maxHealth: 120,
+        speed: 1.5,
         direction: 1,
         shootTimer: 0,
         tentacleTimer: 0,
@@ -519,7 +689,8 @@ function createBoss() {
         color: '#00ff00',
         image: 'assets/enemies/octopus_boss.png',
         tentacles: [],
-        entering: true
+        entering: true,
+        powerUpTimer: 0
     };
     
     // Create tentacles
@@ -766,9 +937,20 @@ function update() {
     
     // Update enemy bullets
     enemyBullets = enemyBullets.filter(bullet => {
-        bullet.y += bullet.speed;
-        if (bullet.angle) {
-            bullet.x += bullet.angle * bullet.speed;
+        if (bullet.vx && bullet.vy) {
+            // Handle infiltrator bullets with velocity components
+            bullet.x += bullet.vx;
+            bullet.y += bullet.vy;
+        } else if (bullet.angleY) {
+            bullet.y += bullet.angleY;
+            if (bullet.angle) {
+                bullet.x += bullet.angle;
+            }
+        } else {
+            bullet.y += bullet.speed;
+            if (bullet.angle) {
+                bullet.x += bullet.angle;
+            }
         }
         if (bullet.homing && !player.invisible) {
             const dx = player.x + player.width / 2 - bullet.x;
@@ -778,25 +960,56 @@ function update() {
                 bullet.x += (dx / dist) * 2;
             }
         }
-        return bullet.y < canvas.height + 10;
+        return bullet.y < canvas.height + 10 && bullet.y > -10 && bullet.x > -10 && bullet.x < canvas.width + 10;
     });
+    
+    // Handle shmup mode
+    if (shmupMode) {
+        updateShmupMode();
+        return; // Skip normal enemy updates
+    }
     
     // Update enemies
     if (currentLevel < 3) {
         let shouldDrop = false;
         
         enemies.forEach(enemy => {
-            enemy.x += enemyTypes[enemy.type].speed * enemyDirection * enemySpeed;
-            
-            if (enemy.x <= 0 || enemy.x >= canvas.width - enemy.width) {
-                shouldDrop = true;
+            // Endless enemies have different movement
+            if (enemy.endlessEnemy) {
+                enemy.y += enemyTypes[enemy.type].speed;
+                
+                // Special behaviors for new enemy types
+                if (enemy.type === 'kamikaze' && !player.invisible) {
+                    // Kamikaze enemies track player
+                    const dx = player.x - enemy.x;
+                    enemy.x += Math.sign(dx) * Math.min(Math.abs(dx), enemyTypes.kamikaze.speed);
+                }
+                
+                if (enemy.type === 'sniper') {
+                    // Snipers stop and shoot
+                    if (enemy.y > 100 && enemy.y < 200) {
+                        enemy.y += 0; // Stop moving
+                    }
+                }
+                
+                // Remove if off screen
+                if (enemy.y > canvas.height + 50) {
+                    enemy.toRemove = true;
+                }
+            } else {
+                // Normal enemy movement
+                enemy.x += enemyTypes[enemy.type].speed * enemyDirection * enemySpeed;
+                
+                if (enemy.x <= 0 || enemy.x >= canvas.width - enemy.width) {
+                    shouldDrop = true;
+                }
+                
+                if (enemy.y + enemy.height >= canvas.height - 100) {
+                    gameOver('The aliens have invaded!');
+                }
             }
             
-            if (enemy.y + enemy.height >= canvas.height - 100) {
-                gameOver('The aliens have invaded!');
-            }
-            
-            // Enemy shooting (reduced frequency)
+            // Enemy shooting patterns
             if (enemy.type === 'shooter' && Math.random() < 0.008) {
                 enemyBullets.push({
                     x: enemy.x + enemy.width / 2 - 4,
@@ -805,6 +1018,20 @@ function update() {
                     height: 6,
                     speed: 2,
                     circular: true
+                });
+            } else if (enemy.type === 'sniper' && enemy.y > 100 && enemy.y < 200 && Math.random() < 0.02) {
+                // Sniper shoots accurate shots at player
+                const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+                enemyBullets.push({
+                    x: enemy.x + enemy.width / 2,
+                    y: enemy.y + enemy.height,
+                    width: 8,
+                    height: 8,
+                    speed: 4,
+                    angle: Math.cos(angle) * 4,
+                    angleY: Math.sin(angle) * 4,
+                    circular: true,
+                    color: '#ffffff'
                 });
             } else if (Math.random() < 0.0005 * currentLevel) {
                 enemyBullets.push({
@@ -870,9 +1097,9 @@ function update() {
                     infiltrator.state = 'positioning';
                 }
             } else if (infiltrator.state === 'positioning') {
-                // Move to behind player formation
+                // Move to behind player formation (behind means further down the screen)
                 const targetX = player.x + player.width / 2 - infiltrator.width / 2;
-                const targetY = player.y + 50;
+                const targetY = player.y + 80; // Position behind player
                 
                 const dx = targetX - infiltrator.x;
                 const dy = targetY - infiltrator.y;
@@ -880,92 +1107,94 @@ function update() {
                 infiltrator.x += Math.sign(dx) * Math.min(Math.abs(dx), infiltrator.speed * 1.5);
                 infiltrator.y += Math.sign(dy) * Math.min(Math.abs(dy), infiltrator.speed);
                 
-                if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+                if (Math.abs(dx) < 30 && Math.abs(dy) < 30) {
                     infiltrator.state = 'combat';
                     infiltrator.rapidFireTime = 0;
                 }
             } else if (infiltrator.state === 'combat') {
-                // Stay behind player but maintain some distance
+                // Stay behind player but maintain tactical position
                 const targetX = player.x + player.width / 2 - infiltrator.width / 2;
+                const targetY = player.y + 80; // Stay behind player
                 const dx = targetX - infiltrator.x;
-                infiltrator.x += Math.sign(dx) * Math.min(Math.abs(dx), infiltrator.speed * 0.8);
+                const dy = targetY - infiltrator.y;
                 
-                // Smart targeting system
+                // Follow player more closely
+                infiltrator.x += Math.sign(dx) * Math.min(Math.abs(dx), infiltrator.speed * 1.2);
+                infiltrator.y += Math.sign(dy) * Math.min(Math.abs(dy), infiltrator.speed * 0.5);
+                
+                // Smart shooting system - try to hit player while avoiding friendly fire
                 infiltrator.rapidFireTime++;
                 
-                if (infiltrator.targetingEnemies && enemies.length > 0) {
-                    // Target middle enemies first (most dangerous to player)
-                    const centerEnemies = enemies.filter(enemy => 
-                        enemy.x > canvas.width * 0.3 && enemy.x < canvas.width * 0.7
-                    );
-                    const targets = centerEnemies.length > 0 ? centerEnemies : enemies;
+                if (infiltrator.rapidFireTime % 30 === 0 && !player.invisible) {
+                    // Calculate angle to player
+                    const angleToPlayer = Math.atan2(player.y - infiltrator.y, player.x + player.width/2 - infiltrator.x - infiltrator.width/2);
                     
-                    if (infiltrator.rapidFireTime % 20 === 0) {
-                        // Pick closest enemy to player
-                        let closestEnemy = targets[0];
-                        let minDist = Infinity;
+                    // Check if there are enemies in the line of fire
+                    let clearShot = true;
+                    const shotPath = {
+                        x1: infiltrator.x + infiltrator.width / 2,
+                        y1: infiltrator.y,
+                        x2: player.x + player.width / 2,
+                        y2: player.y + player.height / 2
+                    };
+                    
+                    // Check if any enemy is in the line of fire
+                    enemies.forEach(enemy => {
+                        const enemyCenter = {
+                            x: enemy.x + enemy.width / 2,
+                            y: enemy.y + enemy.height / 2
+                        };
                         
-                        targets.forEach(enemy => {
-                            const dist = Math.abs(enemy.y - player.y);
-                            if (dist < minDist) {
-                                minDist = dist;
-                                closestEnemy = enemy;
-                            }
+                        // Simple line-circle intersection check
+                        const dist = Math.abs((shotPath.y2 - shotPath.y1) * enemyCenter.x - (shotPath.x2 - shotPath.x1) * enemyCenter.y + shotPath.x2 * shotPath.y1 - shotPath.y2 * shotPath.x1) / 
+                                    Math.sqrt(Math.pow(shotPath.y2 - shotPath.y1, 2) + Math.pow(shotPath.x2 - shotPath.x1, 2));
+                        
+                        if (dist < 30) { // Enemy is too close to shot path
+                            clearShot = false;
+                        }
+                    });
+                    
+                    // Calculate aggression based on remaining enemies (fewer enemies = more aggressive)
+                    const maxEnemies = 20; // Approximate max enemies per level
+                    const aggressionBonus = (maxEnemies - enemies.length) / maxEnemies;
+                    const baseChance = 0.3 + aggressionBonus * 0.7; // 30% to 100% chance
+                    
+                    if (clearShot || Math.random() < baseChance) {
+                        // Take the shot!
+                        const bulletSpeed = 5;
+                        enemyBullets.push({
+                            x: infiltrator.x + infiltrator.width / 2,
+                            y: infiltrator.y,
+                            width: 8,
+                            height: 8,
+                            speed: bulletSpeed,
+                            vx: Math.cos(angleToPlayer) * bulletSpeed,
+                            vy: Math.sin(angleToPlayer) * bulletSpeed,
+                            circular: true,
+                            color: '#ff0066',
+                            fromInfiltrator: true
                         });
                         
-                        if (closestEnemy) {
-                            // Fire weapon based on weapon level
-                            if (infiltrator.weaponLevel >= 3) {
-                                // Level 3: Spread shot
-                                for (let i = -1; i <= 1; i++) {
-                                    playerBullets.push({
+                        // More aggressive when fewer enemies (rapid fire)
+                        if (enemies.length < 5 && Math.random() < 0.5) {
+                            setTimeout(() => {
+                                if (infiltrator.health > 0) {
+                                    enemyBullets.push({
                                         x: infiltrator.x + infiltrator.width / 2,
                                         y: infiltrator.y,
                                         width: 8,
                                         height: 8,
-                                        speed: 12,
-                                        damage: 2,
-                                        angle: i * 0.2,
-                                        fromInfiltrator: true,
-                                        color: '#ff0066'
+                                        speed: bulletSpeed,
+                                        vx: Math.cos(angleToPlayer + 0.1) * bulletSpeed,
+                                        vy: Math.sin(angleToPlayer + 0.1) * bulletSpeed,
+                                        circular: true,
+                                        color: '#ff0066',
+                                        fromInfiltrator: true
                                     });
                                 }
-                            } else {
-                                // Level 2: Single shot
-                                const angle = Math.atan2(closestEnemy.y - infiltrator.y, closestEnemy.x - infiltrator.x);
-                                playerBullets.push({
-                                    x: infiltrator.x + infiltrator.width / 2,
-                                    y: infiltrator.y,
-                                    width: 6,
-                                    height: 6,
-                                    speed: 10,
-                                    damage: 1,
-                                    angle: Math.cos(angle) * 10,
-                                    angleY: Math.sin(angle) * 10,
-                                    fromInfiltrator: true,
-                                    color: '#8800ff'
-                                });
-                            }
+                            }, 100);
                         }
                     }
-                }
-                
-                // Occasionally attack player (less frequently)
-                if (Math.random() < 0.005 && !player.invisible) {
-                    enemyBullets.push({
-                        x: infiltrator.x + infiltrator.width / 2,
-                        y: infiltrator.y,
-                        width: 6,
-                        height: 6,
-                        speed: 3,
-                        circular: true,
-                        color: '#ff0066'
-                    });
-                }
-                
-                // Switch targeting if no enemies left
-                if (enemies.length === 0) {
-                    infiltrator.targetingEnemies = false;
                 }
             }
         });
@@ -1005,49 +1234,52 @@ function update() {
             });
             
             boss.shootTimer++;
-            if (boss.shootTimer > 120) { // Slower attack rate
+            if (boss.shootTimer > 90) { // More frequent but weaker attacks
                 const healthRatio = boss.health / boss.maxHealth;
                 
                 if (healthRatio > 0.66) {
-                    // Phase 1: Ink spray (reduced bullets)
-                    for (let i = 0; i < 5; i++) {
-                        const angle = (i / 5) * Math.PI + Math.PI * 0.5;
+                    // Phase 1: Wave patterns
+                    for (let i = 0; i < 7; i++) {
+                        const angle = (i / 7) * Math.PI + Math.PI * 0.5 + Math.sin(Date.now() * 0.001) * 0.3;
                         enemyBullets.push({
                             x: boss.x + boss.width / 2,
                             y: boss.y + boss.height / 2,
-                            width: 10,
-                            height: 10,
-                            speed: 2,
-                            angle: Math.cos(angle) * 2,
+                            width: 8,
+                            height: 8,
+                            speed: 1.5,
+                            angle: Math.cos(angle) * 1.5,
                             circular: true,
                             color: '#00ff00'
                         });
                     }
                 } else if (healthRatio > 0.33) {
-                    // Phase 2: Homing missiles (fewer)
-                    for (let i = 0; i < 2; i++) {
+                    // Phase 2: Spiral pattern
+                    for (let i = 0; i < 3; i++) {
+                        const baseAngle = Date.now() * 0.002 + i * 2.094;
                         enemyBullets.push({
-                            x: boss.x + boss.width / 2 + (i - 0.5) * 80,
-                            y: boss.y + boss.height,
-                            width: 8,
-                            height: 8,
-                            speed: 1.5,
+                            x: boss.x + boss.width / 2,
+                            y: boss.y + boss.height / 2,
+                            width: 10,
+                            height: 10,
+                            speed: 1.8,
+                            angle: Math.cos(baseAngle) * 2,
+                            angleY: Math.sin(baseAngle) * 2,
                             circular: true,
-                            homing: true,
                             color: '#88ff00'
                         });
                     }
                 } else {
-                    // Phase 3: Spread pattern (not bullet hell)
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (i / 8) * Math.PI * 2;
+                    // Phase 3: Chaotic patterns but dodgeable
+                    for (let i = 0; i < 10; i++) {
+                        const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.5;
                         enemyBullets.push({
                             x: boss.x + boss.width / 2,
                             y: boss.y + boss.height / 2,
-                            width: 6,
-                            height: 6,
-                            speed: 2.5,
-                            angle: Math.cos(angle) * 2.5,
+                            width: 5,
+                            height: 5,
+                            speed: 2 + Math.random(),
+                            angle: Math.cos(angle) * 2,
+                            angleY: Math.sin(angle) * 2,
                             circular: true,
                             color: '#ffff00'
                         });
@@ -1055,14 +1287,35 @@ function update() {
                 }
                 boss.shootTimer = 0;
             }
+            
+            // Boss spawns power-ups occasionally
+            boss.powerUpTimer++;
+            if (boss.powerUpTimer > 600) { // Every 10 seconds
+                const types = ['shield', 'rapidFire', 'damage'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                powerUps.push({
+                    x: boss.x + boss.width / 2 - 15,
+                    y: boss.y + boss.height,
+                    width: 30,
+                    height: 30,
+                    type: type,
+                    speed: 1
+                });
+                boss.powerUpTimer = 0;
+            }
         }
     }
     
     // Collision detection - Player bullets vs enemies
     playerBullets.forEach((bullet, bulletIndex) => {
         if (bullet.fromInfiltrator) {
-            bullet.x += bullet.angle || 0;
-            bullet.y += bullet.angleY || -bullet.speed;
+            if (bullet.vx && bullet.vy) {
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+            } else {
+                bullet.x += bullet.angle || 0;
+                bullet.y += bullet.angleY || -bullet.speed;
+            }
         } else if (bullet.angle && !bullet.laser && !bullet.pulse) {
             bullet.x += bullet.angle * bullet.speed;
         }
@@ -1074,7 +1327,15 @@ function update() {
                 bullet.y < enemy.y + enemy.height &&
                 bullet.y + bullet.height > enemy.y) {
                 
-                enemy.health -= bullet.damage || 1;
+                // Handle shielder's shield
+                if (enemy.type === 'shielder' && enemy.shield > 0) {
+                    enemy.shield--;
+                    createParticles(bullet.x, bullet.y, '#0088ff', 5);
+                    playShieldHit();
+                } else {
+                    enemy.health -= bullet.damage || 1;
+                }
+                
                 if (!bullet.laser && !bullet.pulse) {
                     playerBullets.splice(bulletIndex, 1);
                 }
@@ -1082,11 +1343,30 @@ function update() {
                 if (enemy.health <= 0) {
                     score += enemyTypes[enemy.type].points;
                     createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemyTypes[enemy.type].color);
+                    
+                    // Splitter enemy splits into smaller enemies
+                    if (enemy.type === 'splitter') {
+                        for (let i = 0; i < 3; i++) {
+                            enemies.push({
+                                x: enemy.x + (i - 1) * 20,
+                                y: enemy.y,
+                                width: 25,
+                                height: 20,
+                                type: 'basic',
+                                health: 1,
+                                maxHealth: 1,
+                                shootTimer: 0,
+                                endlessEnemy: enemy.endlessEnemy
+                            });
+                        }
+                    }
+                    
                     enemies.splice(enemyIndex, 1);
                     playExplosionSound();
                     
-                    // Power-up drop
-                    if (Math.random() < 0.2) {
+                    // Power-up drop (higher chance in endless mode)
+                    const dropChance = endlessMode ? 0.3 : 0.2;
+                    if (Math.random() < dropChance) {
                         const types = Object.keys(powerUpTypes);
                         const type = types[Math.floor(Math.random() * types.length)];
                         powerUps.push({
@@ -1101,6 +1381,60 @@ function update() {
                 }
             }
         });
+        
+        // Check shmup enemies
+        if (shmupMode) {
+            shmupEnemies.forEach((enemy, enemyIndex) => {
+                if (bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemy.height &&
+                    bullet.y + bullet.height > enemy.y) {
+                    
+                    enemy.health -= bullet.damage || 1;
+                    if (!bullet.laser && !bullet.pulse) {
+                        playerBullets.splice(bulletIndex, 1);
+                    }
+                    createParticles(bullet.x, bullet.y, enemy.color, 10);
+                    
+                    if (enemy.health <= 0) {
+                        score += enemy.points || 100;
+                        createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color, 30);
+                        shmupEnemies.splice(enemyIndex, 1);
+                        playExplosionSound();
+                        
+                        // Special death effects
+                        if (enemy.type === 'station') {
+                            // Big explosion for space station
+                            for (let i = 0; i < 50; i++) {
+                                particles.push({
+                                    x: enemy.x + enemy.width / 2,
+                                    y: enemy.y + enemy.height / 2,
+                                    vx: (Math.random() - 0.5) * 15,
+                                    vy: (Math.random() - 0.5) * 15,
+                                    life: 40,
+                                    size: Math.random() * 6 + 2,
+                                    color: '#ff8800'
+                                });
+                            }
+                        }
+                        
+                        // Power-up drops
+                        if (Math.random() < 0.4) {
+                            const types = Object.keys(powerUpTypes);
+                            const type = types[Math.floor(Math.random() * types.length)];
+                            powerUps.push({
+                                x: enemy.x + enemy.width / 2 - 15,
+                                y: enemy.y,
+                                width: 30,
+                                height: 30,
+                                type: type,
+                                speed: 2
+                            });
+                        }
+                    }
+                }
+            });
+        }
         
         // Check enemy fighters
         enemyFighters.forEach((fighter, fighterIndex) => {
@@ -1175,7 +1509,9 @@ function update() {
                     createParticles(boss.x + boss.width / 2, boss.y + boss.height / 2, '#00ff00', 100);
                     playExplosionSound();
                     boss = null;
-                    showVictory();
+                    
+                    // Show blackhole screen and transition to endless mode
+                    showBlackholeTransition();
                 }
             }
         }
@@ -1211,6 +1547,194 @@ function update() {
                 enemyBullets.splice(index, 1);
             }
         });
+    }
+    
+    // Friendly fire - Infiltrator bullets vs regular enemies
+    enemyBullets.forEach((bullet, bulletIndex) => {
+        if (bullet.fromInfiltrator) {
+            enemies.forEach((enemy, enemyIndex) => {
+                if (bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemy.height &&
+                    bullet.y + bullet.height > enemy.y) {
+                    
+                    enemy.health -= 1;
+                    enemyBullets.splice(bulletIndex, 1);
+                    createParticles(bullet.x, bullet.y, '#ff0066', 8);
+                    
+                    if (enemy.health <= 0) {
+                        score += enemyTypes[enemy.type].points;
+                        createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemyTypes[enemy.type].color);
+                        enemies.splice(enemyIndex, 1);
+                        playExplosionSound();
+                        
+                        // Power-up drop from friendly fire kills
+                        if (Math.random() < 0.15) {
+                            const types = Object.keys(powerUpTypes);
+                            const type = types[Math.floor(Math.random() * types.length)];
+                            powerUps.push({
+                                x: enemy.x,
+                                y: enemy.y,
+                                width: 30,
+                                height: 30,
+                                type: type,
+                                speed: 2
+                            });
+                        }
+                    }
+                }
+            });
+        }
+    });
+    
+    // Collision detection - Enemy bullets vs player
+    if (!player.invulnerable && !player.invisible) {
+        // Collision detection - Normal enemies vs player
+        if (!shmupMode) {
+            enemies.forEach((enemy, index) => {
+                if (enemy.x < player.x + player.width &&
+                    enemy.x + enemy.width > player.x &&
+                    enemy.y < player.y + player.height &&
+                    enemy.y + enemy.height > player.y) {
+                    
+                    if (player.phasing) {
+                        return;
+                    }
+                    
+                    // Damage player
+                    if (player.shield > 0) {
+                        player.shield--;
+                        playShieldHit();
+                    } else if (!player.powerUps.includes('shield')) {
+                        playerHit();
+                    } else {
+                        const shieldIndex = player.powerUps.indexOf('shield');
+                        if (shieldIndex > -1) {
+                            player.powerUps.splice(shieldIndex, 1);
+                            updatePowerUpIndicator();
+                            playShieldHit();
+                        }
+                    }
+                    
+                    // Damage enemy on collision
+                    enemy.health -= 2; // Collision does significant damage
+                    createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color || '#ff0000', 20);
+                    
+                    if (enemy.health <= 0) {
+                        score += enemyTypes[enemy.type].points;
+                        enemies.splice(index, 1);
+                        playExplosionSound();
+                    }
+                }
+            });
+            
+            // Collision detection - Enemy fighters vs player
+            enemyFighters.forEach((fighter, index) => {
+                if (fighter.x < player.x + player.width &&
+                    fighter.x + fighter.width > player.x &&
+                    fighter.y < player.y + player.height &&
+                    fighter.y + fighter.height > player.y) {
+                    
+                    if (player.phasing) {
+                        return;
+                    }
+                    
+                    // Damage player
+                    if (player.shield > 0) {
+                        player.shield--;
+                        playShieldHit();
+                    } else if (!player.powerUps.includes('shield')) {
+                        playerHit();
+                    } else {
+                        const shieldIndex = player.powerUps.indexOf('shield');
+                        if (shieldIndex > -1) {
+                            player.powerUps.splice(shieldIndex, 1);
+                            updatePowerUpIndicator();
+                            playShieldHit();
+                        }
+                    }
+                    
+                    // Destroy fighter on collision
+                    createParticles(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2, fighter.color, 30);
+                    enemyFighters.splice(index, 1);
+                    score += 50;
+                    playExplosionSound();
+                }
+            });
+            
+            // Collision detection - Infiltrators vs player
+            infiltrators.forEach((infiltrator, index) => {
+                if (infiltrator.x < player.x + player.width &&
+                    infiltrator.x + infiltrator.width > player.x &&
+                    infiltrator.y < player.y + player.height &&
+                    infiltrator.y + infiltrator.height > player.y) {
+                    
+                    if (player.phasing) {
+                        return;
+                    }
+                    
+                    // Damage player
+                    if (player.shield > 0) {
+                        player.shield--;
+                        playShieldHit();
+                    } else if (!player.powerUps.includes('shield')) {
+                        playerHit();
+                    } else {
+                        const shieldIndex = player.powerUps.indexOf('shield');
+                        if (shieldIndex > -1) {
+                            player.powerUps.splice(shieldIndex, 1);
+                            updatePowerUpIndicator();
+                            playShieldHit();
+                        }
+                    }
+                    
+                    // Damage infiltrator on collision
+                    infiltrator.health -= 1;
+                    createParticles(infiltrator.x + infiltrator.width / 2, infiltrator.y + infiltrator.height / 2, infiltrator.color, 25);
+                    
+                    if (infiltrator.health <= 0) {
+                        score += 100;
+                        infiltrators.splice(index, 1);
+                        playExplosionSound();
+                    }
+                }
+            });
+        }
+        
+        // Collision detection - Shmup enemies vs player
+        if (shmupMode) {
+            shmupEnemies.forEach((enemy, index) => {
+                if (enemy.x < player.x + player.width &&
+                    enemy.x + enemy.width > player.x &&
+                    enemy.y < player.y + player.height &&
+                    enemy.y + enemy.height > player.y) {
+                    
+                    if (player.phasing) {
+                        return;
+                    }
+                    
+                    // Damage player
+                    if (player.shield > 0) {
+                        player.shield--;
+                        playShieldHit();
+                    } else if (!player.powerUps.includes('shield')) {
+                        playerHit();
+                    } else {
+                        const shieldIndex = player.powerUps.indexOf('shield');
+                        if (shieldIndex > -1) {
+                            player.powerUps.splice(shieldIndex, 1);
+                            updatePowerUpIndicator();
+                            playShieldHit();
+                        }
+                    }
+                    
+                    // Destroy enemy on collision (kamikaze style)
+                    createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color, 40);
+                    shmupEnemies.splice(index, 1);
+                    playExplosionSound();
+                }
+            });
+        }
     }
     
     // Power-up collection
@@ -1250,10 +1774,15 @@ function update() {
         return particle.life > 0;
     });
     
+    // Remove enemies marked for removal
+    enemies = enemies.filter(enemy => !enemy.toRemove);
+    
     // Check level completion
-    if (currentLevel < 3 && enemies.length === 0 && enemyFighters.length === 0 && infiltrators.length === 0) {
+    if (currentLevel < 3 && enemies.length === 0 && enemyFighters.length === 0 && infiltrators.length === 0 && !endlessMode) {
         showLevelComplete();
     }
+    
+    // Remove automatic victory in endless mode - game continues until death
     
     // Update UI
     document.getElementById('score').textContent = score;
@@ -1282,6 +1811,9 @@ function playerHit() {
 
 // Render functions
 function drawShip(x, y, type, color, alpha = 1) {
+    // Only draw ships when game is running
+    if (!gameRunning) return;
+    
     ctx.save();
     ctx.globalAlpha = alpha;
     
@@ -1329,34 +1861,209 @@ function drawShip(x, y, type, color, alpha = 1) {
 }
 
 function render() {
-    // Clear canvas
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Render player
-    if (!player.invisible || Math.floor(Date.now() / 100) % 2) {
-        const alpha = (player.invulnerable && Math.floor(Date.now() / 100) % 2) ? 0.5 : 1;
-        drawShip(player.x, player.y, player.shipType, player.color, alpha);
+    // Clear canvas completely if game not running
+    if (!gameRunning) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
     }
     
-    // Power-up indicators
-    player.powerUps.forEach((powerUp, index) => {
-        ctx.strokeStyle = powerUpTypes[powerUp].color;
-        ctx.lineWidth = 2;
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath();
-        ctx.arc(player.x + player.width / 2, player.y + player.height / 2, 35 + index * 5, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-    });
+    // Clear canvas
+    if (shmupMode) {
+        // Draw shmup background
+        ctx.fillStyle = shmupBackground;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw background planets (furthest back)
+        backgroundPlanets.forEach(planet => {
+            ctx.save();
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = planet.color;
+            ctx.beginPath();
+            ctx.arc(planet.x, planet.y, planet.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw rings if planet has them
+            if (planet.rings) {
+                ctx.strokeStyle = planet.color;
+                ctx.lineWidth = 3;
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.ellipse(planet.x, planet.y, planet.size * 1.3, planet.size * 0.3, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(planet.x, planet.y, planet.size * 1.5, planet.size * 0.4, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        });
+        
+        // Draw background clouds/nebula (middle layer)
+        backgroundClouds.forEach(cloud => {
+            ctx.save();
+            ctx.globalAlpha = cloud.opacity;
+            ctx.fillStyle = cloud.color;
+            ctx.beginPath();
+            ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+        
+        // Draw space debris (moving objects)
+        backgroundDebris.forEach(debris => {
+            ctx.save();
+            ctx.translate(debris.x + debris.width / 2, debris.y + debris.height / 2);
+            ctx.rotate(debris.rotation);
+            ctx.fillStyle = debris.color;
+            ctx.fillRect(-debris.width / 2, -debris.height / 2, debris.width, debris.height);
+            ctx.restore();
+        });
+        
+        // Draw background stars (closest/fastest)
+        backgroundStars.forEach(star => {
+            ctx.save();
+            ctx.globalAlpha = star.brightness;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add star twinkle effect
+            if (Math.random() < 0.1) {
+                ctx.globalAlpha = star.brightness * 1.5;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(star.x - star.size * 2, star.y);
+                ctx.lineTo(star.x + star.size * 2, star.y);
+                ctx.moveTo(star.x, star.y - star.size * 2);
+                ctx.lineTo(star.x, star.y + star.size * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        });
+    } else {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // Render shmup enemies if in shmup mode
+    if (shmupMode) {
+        shmupEnemies.forEach(enemy => {
+            ctx.save();
+            
+            // Handle rotation for certain enemy types
+            if (enemy.type === 'station') {
+                ctx.translate(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+                ctx.rotate(enemy.rotation || 0);
+                ctx.translate(-enemy.width / 2, -enemy.height / 2);
+                
+                if (enemy.image && enemy.imageObj) {
+                    ctx.drawImage(enemy.imageObj, 0, 0, enemy.width, enemy.height);
+                } else {
+                    ctx.fillStyle = enemy.color;
+                    ctx.fillRect(0, 0, enemy.width, enemy.height);
+                }
+            } else {
+                // Draw enemy image or fallback shape
+                if (enemy.image && enemy.imageObj) {
+                    ctx.drawImage(enemy.imageObj, enemy.x, enemy.y, enemy.width, enemy.height);
+                } else {
+                    ctx.fillStyle = enemy.color;
+                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                }
+            }
+            
+            ctx.restore();
+            
+            // Health bar for enemies with more than 1 health
+            if (enemy.health > 1) {
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 4);
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(enemy.x, enemy.y - 10, enemy.width * (enemy.health / enemy.maxHealth), 4);
+            }
+            
+            // Special effects for certain enemy types
+            if (enemy.type === 'hover' && enemy.charging) {
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath();
+                ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 40, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        });
+    }
+    
+    // Render player (only when game is running)
+    if (gameRunning && (!player.invisible || Math.floor(Date.now() / 100) % 2)) {
+        const alpha = (player.invulnerable && Math.floor(Date.now() / 100) % 2) ? 0.5 : 1;
+        drawShip(player.x, player.y, player.shipType, player.color, alpha);
+        
+        // Power-up indicators
+        player.powerUps.forEach((powerUp, index) => {
+            ctx.strokeStyle = powerUpTypes[powerUp].color;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.arc(player.x + player.width / 2, player.y + player.height / 2, 35 + index * 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        });
+    }
     
     // Render enemies
     enemies.forEach(enemy => {
         const type = enemyTypes[enemy.type];
         ctx.fillStyle = type.color;
-        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
         
-        if (enemy.maxHealth > 1) {
+        // Special rendering for new enemy types
+        if (enemy.type === 'kamikaze') {
+            // Draw kamikaze with warning indicator
+            ctx.fillStyle = type.color;
+            ctx.beginPath();
+            ctx.moveTo(enemy.x + enemy.width / 2, enemy.y);
+            ctx.lineTo(enemy.x, enemy.y + enemy.height);
+            ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Warning circle
+            ctx.strokeStyle = '#ff0000';
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 25, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        } else if (enemy.type === 'splitter') {
+            // Draw splitter with segments
+            ctx.fillRect(enemy.x, enemy.y, enemy.width / 3 - 2, enemy.height);
+            ctx.fillRect(enemy.x + enemy.width / 3, enemy.y, enemy.width / 3 - 2, enemy.height);
+            ctx.fillRect(enemy.x + 2 * enemy.width / 3, enemy.y, enemy.width / 3, enemy.height);
+        } else if (enemy.type === 'sniper') {
+            // Draw sniper with crosshair
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            ctx.strokeStyle = type.color;
+            ctx.beginPath();
+            ctx.moveTo(enemy.x + enemy.width / 2, enemy.y + enemy.height + 5);
+            ctx.lineTo(enemy.x + enemy.width / 2, enemy.y + enemy.height + 15);
+            ctx.stroke();
+        } else if (enemy.type === 'shielder') {
+            // Draw shielder
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            if (enemy.shield > 0) {
+                ctx.strokeStyle = '#0088ff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(enemy.x - 5, enemy.y - 5, enemy.width + 10, enemy.height + 10);
+            }
+        } else {
+            // Normal enemy
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+        }
+        
+        // Health bars
+        if (enemy.maxHealth > 1 || enemy.shield) {
             ctx.fillStyle = '#ff0000';
             ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 4);
             ctx.fillStyle = '#00ff00';
@@ -1457,6 +2164,9 @@ function render() {
         ctx.strokeRect(50, 20, canvas.width - 100, 20);
     }
     
+    // Render game elements only when game is running
+    if (!gameRunning) return;
+    
     // Render bullets
     playerBullets.forEach(bullet => {
         if (bullet.laser) {
@@ -1551,7 +2261,15 @@ function gameLoop() {
 
 // Game management functions
 function startGame() {
-    if (!selectedShip) return;
+    console.log('START GAME CLICKED! Selected ship:', selectedShip);
+    
+    if (!selectedShip) {
+        console.error('No ship selected!');
+        alert('Please select a ship first!');
+        return;
+    }
+    
+    console.log('Starting game with ship:', selectedShip);
     
     if (!audioContext) {
         initAudio();
@@ -1586,6 +2304,10 @@ function startGame() {
         
         lives = ship.health;
         
+        // Reset player position
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 20;
+        
         document.getElementById('ui').style.display = 'flex';
         document.getElementById('healthBar').style.display = 'block';
         document.getElementById('pauseMenu').style.display = 'block';
@@ -1605,8 +2327,6 @@ function startGame() {
                 infiltrator.imageObj.src = infiltrator.image;
             }
         });
-        
-        gameLoop();
     }, 2000);
 }
 
@@ -1647,6 +2367,9 @@ function backToMenu() {
     boss = null;
     chargeLevel = 0;
     charging = false;
+    endlessMode = false;
+    currentWave = 0;
+    enemyWaveSpawnTimer = 0;
     
     // Hide game UI
     document.getElementById('ui').style.display = 'none';
@@ -1670,8 +2393,90 @@ function backToMenu() {
 
 function showLevelComplete() {
     gameRunning = false;
-    document.getElementById('nextLevel').textContent = currentLevel + 1;
-    document.getElementById('levelComplete').style.display = 'block';
+    
+    // Show "not-thisguy.png" screen after first round
+    if (currentLevel === 1) {
+        showNotThisGuyScreen();
+    } else {
+        document.getElementById('nextLevel').textContent = currentLevel + 1;
+        document.getElementById('levelComplete').style.display = 'block';
+    }
+}
+
+function showNotThisGuyScreen() {
+    // Create the "not-thisguy" screen
+    const notThisGuyScreen = document.createElement('div');
+    notThisGuyScreen.id = 'notThisGuyScreen';
+    notThisGuyScreen.style.cssText = `
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+        z-index: 200;
+    `;
+    
+    const img = document.createElement('img');
+    img.src = 'assets/screens/not-thisguy.png';
+    img.style.cssText = `
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    `;
+    
+    // Add skip button like intro screens
+    const skipButton = document.createElement('button');
+    skipButton.textContent = 'Skip';
+    skipButton.style.cssText = `
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-family: 'Orbitron', monospace;
+        background: transparent;
+        color: #00ffff;
+        border: 2px solid #00ffff;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        z-index: 201;
+    `;
+    
+    skipButton.onmouseover = () => {
+        skipButton.style.background = '#00ffff';
+        skipButton.style.color = '#000';
+        skipButton.style.boxShadow = '0 0 20px #00ffff';
+        skipButton.style.transform = 'scale(1.1)';
+    };
+    
+    skipButton.onmouseout = () => {
+        skipButton.style.background = 'transparent';
+        skipButton.style.color = '#00ffff';
+        skipButton.style.boxShadow = 'none';
+        skipButton.style.transform = 'scale(1)';
+    };
+    
+    // Function to advance to next level directly
+    function advanceToNextLevel() {
+        document.getElementById('gameContainer').removeChild(notThisGuyScreen);
+        nextLevel(); // Go directly to level 2
+    }
+    
+    skipButton.onclick = advanceToNextLevel;
+    
+    notThisGuyScreen.appendChild(img);
+    notThisGuyScreen.appendChild(skipButton);
+    document.getElementById('gameContainer').appendChild(notThisGuyScreen);
+    
+    // Auto-advance after 3 seconds like intro screens
+    setTimeout(() => {
+        if (document.getElementById('notThisGuyScreen')) {
+            advanceToNextLevel();
+        }
+    }, 3000);
 }
 
 function nextLevel() {
@@ -1684,9 +2489,20 @@ function nextLevel() {
     particles = [];
     enemyDirection = 1;
     
+    // Reset player position and ensure visibility
+    player.x = canvas.width / 2 - player.width / 2;
+    player.y = canvas.height - player.height - 20;
+    player.invisible = false;
+    player.invulnerable = false;
+    player.phasing = false;
+    
     // Restore some health for next level
     player.health = Math.min(player.health + 1, player.maxHealth);
     updateHealthBar();
+    
+    // Show UI elements
+    document.getElementById('ui').style.display = 'flex';
+    document.getElementById('healthBar').style.display = 'block';
     
     playBackgroundMusic(currentLevel);
     
@@ -1720,6 +2536,523 @@ function showVictory() {
     document.getElementById('victory').style.display = 'block';
 }
 
+function showBlackholeTransition() {
+    gameRunning = false;
+    document.getElementById('blackholeScreen').style.display = 'flex';
+    
+    setTimeout(() => {
+        document.getElementById('blackholeScreen').style.display = 'none';
+        
+        // Show "Not this guy again" screen
+        const notThisGuyScreen = document.createElement('div');
+        notThisGuyScreen.id = 'notThisGuyScreen';
+        notThisGuyScreen.style.cssText = `
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            z-index: 200;
+        `;
+        notThisGuyScreen.innerHTML = '<img src="assets/screens/not-thisguy.png" style="max-width: 100%; max-height: 100%;">';
+        document.getElementById('gameContainer').appendChild(notThisGuyScreen);
+        
+        setTimeout(() => {
+            notThisGuyScreen.remove();
+            startShmupMode();
+        }, 3000);
+    }, 4000);
+}
+
+function startShmupMode() {
+    currentLevel = 4;
+    shmupMode = true;
+    shmupStage = 1;
+    shmupRound = 1;
+    shmupWaveSpawned = false;
+    shmupStageTimer = 0;
+    gameRunning = true;
+    
+    // Reset variables for shmup mode
+    enemies = [];
+    enemyBullets = [];
+    infiltrators = [];
+    shmupEnemies = [];
+    
+    // Initialize shmup background
+    initShmupBackground();
+    
+    // Start shmup music
+    playBackgroundMusic(4);
+    
+    // Update UI
+    document.getElementById('level').textContent = `STAGE ${shmupStage} - ROUND ${shmupRound}`;
+    
+    // Load enemy images
+    loadShmupEnemyImages();
+    
+    // Start spawning shmup enemies
+    spawnShmupWave();
+}
+
+// Initialize shmup background
+function initShmupBackground() {
+    // Create gradient background for shmup mode
+    shmupBackground = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    shmupBackground.addColorStop(0, '#001a33');
+    shmupBackground.addColorStop(0.5, '#003366');
+    shmupBackground.addColorStop(1, '#004080');
+    
+    // Initialize scrolling background elements
+    backgroundStars = [];
+    backgroundClouds = [];
+    backgroundPlanets = [];
+    backgroundDebris = [];
+    
+    // Create background stars (fast moving)
+    for (let i = 0; i < 100; i++) {
+        backgroundStars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speed: Math.random() * 3 + 2,
+            brightness: Math.random() * 0.8 + 0.2
+        });
+    }
+    
+    // Create background clouds/nebula (medium speed)
+    for (let i = 0; i < 15; i++) {
+        backgroundClouds.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 80 + 40,
+            speed: Math.random() * 1.5 + 0.5,
+            opacity: Math.random() * 0.3 + 0.1,
+            color: `hsl(${Math.random() * 60 + 200}, 50%, 30%)`
+        });
+    }
+    
+    // Create background planets (slow moving)
+    for (let i = 0; i < 3; i++) {
+        backgroundPlanets.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height * 2 + canvas.height, // Start below screen
+            size: Math.random() * 150 + 100,
+            speed: Math.random() * 0.8 + 0.2,
+            color: `hsl(${Math.random() * 360}, 40%, 40%)`,
+            rings: Math.random() < 0.3 // 30% chance of rings
+        });
+    }
+    
+    // Create space debris (variable speed)
+    for (let i = 0; i < 20; i++) {
+        backgroundDebris.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            width: Math.random() * 8 + 4,
+            height: Math.random() * 8 + 4,
+            speed: Math.random() * 2 + 1,
+            rotation: Math.random() * Math.PI * 2,
+            rotationSpeed: (Math.random() - 0.5) * 0.1,
+            color: '#444444'
+        });
+    }
+}
+
+// Load shmup enemy images
+function loadShmupEnemyImages() {
+    Object.entries(shmupEnemyTypes).forEach(([key, enemy]) => {
+        if (enemy.image) {
+            const img = new Image();
+            img.src = enemy.image;
+            enemy.imageObj = img;
+        }
+    });
+}
+
+// Spawn shmup enemies
+function spawnShmupWave() {
+    if (shmupStage === 1) {
+        // Stage 1: Progressive difficulty with 3 rounds
+        if (shmupRound === 1) {
+            // Round 1: Basic enemies
+            spawnShmupEnemy('smallPlane', canvas.width * 0.2, -50);
+            spawnShmupEnemy('smallPlane', canvas.width * 0.8, -50);
+            setTimeout(() => {
+                spawnShmupEnemy('circleEnemy', canvas.width * 0.5, -100);
+            }, 1500);
+        } else if (shmupRound === 2) {
+            // Round 2: Medium enemies
+            spawnShmupEnemy('bigPlane', canvas.width * 0.3, -50);
+            spawnShmupEnemy('bigPlane', canvas.width * 0.7, -50);
+            setTimeout(() => {
+                spawnShmupEnemy('blackOrange', canvas.width * 0.5, -100);
+                spawnShmupEnemy('circleEnemy', canvas.width * 0.2, -150);
+                spawnShmupEnemy('circleEnemy', canvas.width * 0.8, -150);
+            }, 2000);
+        } else if (shmupRound === 3) {
+            // Round 3: Mixed formation
+            for (let i = 0; i < 4; i++) {
+                spawnShmupEnemy('smallPlane', (i + 1) * canvas.width / 5, -50 - i * 40);
+            }
+            setTimeout(() => {
+                spawnShmupEnemy('complexCircle', canvas.width * 0.5, -200);
+            }, 2500);
+        }
+        
+    } else if (shmupStage === 2) {
+        // Stage 2: Heavier enemies with 3 rounds
+        if (shmupRound === 1) {
+            // Round 1: Side attackers
+            spawnShmupEnemy('sideShooter', -100, 150);
+            spawnShmupEnemy('niceRed', canvas.width * 0.5, -100);
+            setTimeout(() => {
+                spawnShmupEnemy('complexCircle', canvas.width * 0.3, -50);
+                spawnShmupEnemy('complexCircle', canvas.width * 0.7, -50);
+            }, 2000);
+        } else if (shmupRound === 2) {
+            // Round 2: Space station assault
+            spawnShmupEnemy('spaceStation', canvas.width * 0.5, -150);
+            setTimeout(() => {
+                spawnShmupEnemy('blackOrange', canvas.width * 0.2, -50);
+                spawnShmupEnemy('blackOrange', canvas.width * 0.8, -50);
+                spawnShmupEnemy('niceRed', canvas.width * 0.5, -100);
+            }, 3000);
+        } else if (shmupRound === 3) {
+            // Round 3: Heavy formation
+            spawnShmupEnemy('spaceStation', canvas.width * 0.3, -100);
+            spawnShmupEnemy('sideShooter', canvas.width + 50, 100);
+            setTimeout(() => {
+                for (let i = 0; i < 3; i++) {
+                    spawnShmupEnemy('niceRed', (i + 1) * canvas.width / 4, -150 - i * 50);
+                }
+            }, 2000);
+        }
+        
+    } else if (shmupStage === 3) {
+        // Stage 3: Final assault with 3 rounds
+        if (shmupRound === 1) {
+            // Round 1: Triple threat
+            spawnShmupEnemy('tripleEnemy', canvas.width * 0.5, -100);
+            spawnShmupEnemy('spaceStation', canvas.width * 0.2, -200);
+            spawnShmupEnemy('spaceStation', canvas.width * 0.8, -200);
+            setTimeout(() => {
+                for (let i = 0; i < 5; i++) {
+                    spawnShmupEnemy('blackOrange', (i + 1) * canvas.width / 6, -50 - i * 30);
+                }
+            }, 2000);
+        } else if (shmupRound === 2) {
+            // Round 2: Pincer attack
+            spawnShmupEnemy('sideShooter', -100, 100);
+            spawnShmupEnemy('sideShooter', canvas.width + 50, 150);
+            spawnShmupEnemy('tripleEnemy', canvas.width * 0.5, -100);
+            setTimeout(() => {
+                spawnShmupEnemy('spaceStation', canvas.width * 0.5, -200);
+                for (let i = 0; i < 4; i++) {
+                    spawnShmupEnemy('complexCircle', (i + 1) * canvas.width / 5, -150 - i * 40);
+                }
+            }, 3000);
+        } else if (shmupRound === 3) {
+            // Round 3: Final chaos
+            spawnShmupEnemy('tripleEnemy', canvas.width * 0.3, -50);
+            spawnShmupEnemy('tripleEnemy', canvas.width * 0.7, -50);
+            spawnShmupEnemy('spaceStation', canvas.width * 0.5, -150);
+            setTimeout(() => {
+                spawnShmupEnemy('sideShooter', -100, 120);
+                spawnShmupEnemy('sideShooter', canvas.width + 50, 180);
+                for (let i = 0; i < 6; i++) {
+                    spawnShmupEnemy('niceRed', (i + 1) * canvas.width / 7, -200 - i * 35);
+                }
+            }, 2500);
+        }
+    }
+}
+
+function spawnShmupEnemy(type, x, y) {
+    const enemyType = shmupEnemyTypes[type];
+    shmupEnemies.push({
+        type: type,
+        x: x,
+        y: y,
+        width: 60,
+        height: 50,
+        health: enemyType.health,
+        maxHealth: enemyType.health,
+        speed: enemyType.speed,
+        movePattern: enemyType.movePattern,
+        fireRate: enemyType.fireRate,
+        shootTimer: 0,
+        moveTimer: 0,
+        image: enemyType.image,
+        imageObj: enemyType.imageObj,
+        color: enemyType.color,
+        points: enemyType.points,
+        active: true
+    });
+}
+
+// Update shmup mode
+function updateShmupMode() {
+    // Update multi-layered scrolling background
+    backgroundY += 2;
+    if (backgroundY > canvas.height) backgroundY = 0;
+    
+    // Update background stars (fastest layer)
+    backgroundStars.forEach(star => {
+        star.y += star.speed;
+        if (star.y > canvas.height + star.size) {
+            star.y = -star.size;
+            star.x = Math.random() * canvas.width;
+        }
+    });
+    
+    // Update background clouds (medium speed)
+    backgroundClouds.forEach(cloud => {
+        cloud.y += cloud.speed;
+        if (cloud.y > canvas.height + cloud.size) {
+            cloud.y = -cloud.size;
+            cloud.x = Math.random() * canvas.width;
+        }
+    });
+    
+    // Update background planets (slowest layer)
+    backgroundPlanets.forEach(planet => {
+        planet.y += planet.speed;
+        if (planet.y > canvas.height + planet.size) {
+            planet.y = -planet.size - Math.random() * canvas.height;
+            planet.x = Math.random() * canvas.width;
+            // Generate new planet properties
+            planet.size = Math.random() * 150 + 100;
+            planet.color = `hsl(${Math.random() * 360}, 40%, 40%)`;
+            planet.rings = Math.random() < 0.3;
+        }
+    });
+    
+    // Update space debris (rotating and moving)
+    backgroundDebris.forEach(debris => {
+        debris.y += debris.speed;
+        debris.rotation += debris.rotationSpeed;
+        if (debris.y > canvas.height + debris.height) {
+            debris.y = -debris.height;
+            debris.x = Math.random() * canvas.width;
+        }
+    });
+    
+    // Update shmup enemies
+    shmupEnemies = shmupEnemies.filter(enemy => {
+        enemy.moveTimer++;
+        
+        // Movement patterns
+        switch (enemy.movePattern) {
+            case 'straight':
+                enemy.y += enemy.speed;
+                break;
+            case 'sine':
+                enemy.y += enemy.speed;
+                enemy.x += Math.sin(enemy.moveTimer * 0.05) * 2;
+                break;
+            case 'circle':
+                enemy.y += enemy.speed * 0.5;
+                enemy.x += Math.cos(enemy.moveTimer * 0.1) * 3;
+                break;
+            case 'complex':
+                enemy.y += enemy.speed;
+                enemy.x += Math.sin(enemy.moveTimer * 0.05) * Math.cos(enemy.moveTimer * 0.02) * 4;
+                break;
+            case 'dive':
+                if (enemy.y < canvas.height * 0.3) {
+                    enemy.y += enemy.speed;
+                } else {
+                    enemy.y += enemy.speed * 3;
+                    const dx = player.x - enemy.x;
+                    enemy.x += Math.sign(dx) * Math.min(Math.abs(dx), enemy.speed);
+                }
+                break;
+            case 'hover':
+                if (enemy.y < 150) {
+                    enemy.y += enemy.speed;
+                } else {
+                    enemy.x += Math.sin(enemy.moveTimer * 0.03) * 2;
+                }
+                break;
+            case 'formation':
+                enemy.y += enemy.speed;
+                if (enemy.moveTimer % 60 < 30) {
+                    enemy.x += enemy.speed;
+                } else {
+                    enemy.x -= enemy.speed;
+                }
+                break;
+            case 'station':
+                if (enemy.y < 100) {
+                    enemy.y += enemy.speed;
+                } else {
+                    // Rotate slowly
+                    enemy.rotation = (enemy.rotation || 0) + 0.01;
+                }
+                break;
+            case 'side':
+                if (enemy.x < 0) {
+                    enemy.x += enemy.speed * 2;
+                } else if (enemy.x > canvas.width - enemy.width) {
+                    enemy.x -= enemy.speed * 2;
+                }
+                if (enemy.y < 150) {
+                    enemy.y += enemy.speed;
+                }
+                break;
+        }
+        
+        // Enemy shooting
+        enemy.shootTimer++;
+        if (enemy.shootTimer > 60 / enemy.fireRate) {
+            if (enemy.type === 'tripleEnemy') {
+                // Triple shot
+                for (let i = -1; i <= 1; i++) {
+                    enemyBullets.push({
+                        x: enemy.x + enemy.width / 2,
+                        y: enemy.y + enemy.height,
+                        width: 6,
+                        height: 12,
+                        speed: 4,
+                        angle: i * 0.3,
+                        circular: false,
+                        color: '#ff8800'
+                    });
+                }
+            } else if (enemy.type === 'spaceStation' && enemy.rotation) {
+                // Rotating shots
+                for (let i = 0; i < 4; i++) {
+                    const angle = enemy.rotation + (i * Math.PI / 2);
+                    enemyBullets.push({
+                        x: enemy.x + enemy.width / 2,
+                        y: enemy.y + enemy.height / 2,
+                        width: 8,
+                        height: 8,
+                        speed: 3,
+                        angle: Math.cos(angle) * 3,
+                        angleY: Math.sin(angle) * 3,
+                        circular: true,
+                        color: '#00ff00'
+                    });
+                }
+            } else {
+                // Normal shot
+                enemyBullets.push({
+                    x: enemy.x + enemy.width / 2,
+                    y: enemy.y + enemy.height,
+                    width: 6,
+                    height: 10,
+                    speed: 5,
+                    circular: false,
+                    color: '#ffff00'
+                });
+            }
+            enemy.shootTimer = 0;
+        }
+        
+        // Remove if off screen or dead
+        if (enemy.y > canvas.height + 100 || enemy.health <= 0) {
+            if (enemy.health <= 0) {
+                score += shmupEnemyTypes[enemy.type].points;
+                createParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#ff8800', 20);
+                playExplosionSound();
+                
+                // Drop power-ups
+                if (Math.random() < 0.3) {
+                    const types = Object.keys(powerUpTypes);
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    powerUps.push({
+                        x: enemy.x + enemy.width / 2 - 15,
+                        y: enemy.y,
+                        width: 30,
+                        height: 30,
+                        type: type,
+                        speed: 2
+                    });
+                }
+            }
+            return false;
+        }
+        return true;
+    });
+    
+    // Check for round/stage completion
+    if (shmupEnemies.length === 0 && !shmupWaveSpawned) {
+        shmupWaveSpawned = true;
+        shmupStageTimer = 0;
+        
+        if (shmupRound < 3) {
+            // Next round in current stage
+            shmupRound++;
+            document.getElementById('level').textContent = `STAGE ${shmupStage} - ROUND ${shmupRound}`;
+            setTimeout(() => {
+                shmupWaveSpawned = false;
+                spawnShmupWave();
+            }, 2000);
+        } else {
+            // Complete stage, move to next
+            shmupStage++;
+            shmupRound = 1;
+            
+            if (shmupStage > 3) {
+                // End of shmup mode after 3 stages
+                gameRunning = false;
+                const endScreen = document.createElement('div');
+                endScreen.style.cssText = `
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    background: rgba(0, 0, 0, 0.9);
+                    color: #00ffff;
+                    font-family: 'Orbitron', monospace;
+                    z-index: 200;
+                `;
+                endScreen.innerHTML = `
+                    <h1 style="font-size: 48px; margin: 20px;">PILOT SURVIVED!</h1>
+                    <h2 style="font-size: 32px; margin: 20px;">All Stages Completed</h2>
+                    <p style="font-size: 24px; margin: 20px;">Final Score: ${score}</p>
+                    <button onclick="resetGame()" style="
+                        padding: 15px 30px;
+                        font-size: 20px;
+                        background: #00ffff;
+                        border: none;
+                        color: #000;
+                        cursor: pointer;
+                        font-family: 'Orbitron', monospace;
+                        margin-top: 20px;
+                    ">PLAY AGAIN</button>
+                `;
+                document.getElementById('gameContainer').appendChild(endScreen);
+            } else {
+                // Next stage
+                document.getElementById('level').textContent = `STAGE ${shmupStage} - ROUND ${shmupRound}`;
+                // Change music for new stage
+                playBackgroundMusic(3 + shmupStage);
+                setTimeout(() => {
+                    shmupWaveSpawned = false;
+                    spawnShmupWave();
+                }, 3000);
+            }
+        }
+    }
+    
+    // Timer for additional wave spawning if needed
+    shmupStageTimer++;
+    
+    // Spawn additional enemies if taking too long (every 10 seconds)
+    if (shmupEnemies.length > 0 && shmupEnemies.length < 2 && shmupStageTimer > 600 && !shmupWaveSpawned) {
+        shmupStageTimer = 0;
+        // Spawn a few more enemies to keep the action going
+        spawnShmupEnemy('smallPlane', Math.random() * canvas.width, -50);
+        spawnShmupEnemy('circleEnemy', Math.random() * canvas.width, -100);
+    }
+}
+
 function resetGame() {
     score = 0;
     currentLevel = 1;
@@ -1741,6 +3074,18 @@ function resetGame() {
     dropSpeed = 10;
     chargeLevel = 0;
     charging = false;
+    endlessMode = false;
+    currentWave = 0;
+    enemyWaveSpawnTimer = 0;
+    
+    // Reset shmup mode
+    shmupMode = false;
+    shmupStage = 1;
+    shmupRound = 1;
+    shmupEnemies = [];
+    backgroundY = 0;
+    shmupWaveSpawned = false;
+    shmupStageTimer = 0;
     
     // Reset health
     player.health = player.maxHealth;
@@ -1751,6 +3096,10 @@ function resetGame() {
     document.getElementById('victory').style.display = 'none';
     document.getElementById('levelComplete').style.display = 'none';
     
+    // Remove any custom end screens
+    const endScreens = document.querySelectorAll('#gameContainer > div[style*="z-index: 200"]');
+    endScreens.forEach(screen => screen.remove());
+    
     playBackgroundMusic(1);
     createEnemies(1);
 }
@@ -1759,6 +3108,7 @@ function resetGame() {
 window.onload = function() {
     initializeShipSelection();
     startIntroSequence();
+    gameLoop();
 };
 
 // Make functions globally accessible
@@ -1770,3 +3120,23 @@ window.nextLevel = nextLevel;
 window.resetGame = resetGame;
 window.toggleSound = toggleSound;
 window.skipToMenu = skipToMenu;
+
+// Test function to debug UI interactions
+window.debugClick = function() {
+    console.log('Testing UI interactions...');
+    const startButton = document.getElementById('startButton');
+    const shipGrid = document.getElementById('shipGrid');
+    const startScreen = document.getElementById('startScreen');
+    
+    console.log('Start button:', startButton, 'Disabled:', startButton?.disabled);
+    console.log('Ship grid:', shipGrid, 'Children:', shipGrid?.children.length);
+    console.log('Start screen display:', startScreen?.style.display);
+    console.log('Start screen visibility:', getComputedStyle(startScreen).display);
+    
+    // Test ship selection
+    console.log('Available ships:', Object.keys(shipTypes));
+    if (shipGrid?.children.length > 0) {
+        console.log('First ship element:', shipGrid.children[0]);
+        console.log('First ship data-ship:', shipGrid.children[0].getAttribute('data-ship'));
+    }
+};
