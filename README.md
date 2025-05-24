@@ -1,6 +1,6 @@
 # Opus Neon Fighter X
 
-A retro-futuristic space shooter game with multiple ship types, special abilities, and epic boss battles!
+A retro-futuristic full-screen space shooter game with 6 unique ships, special abilities, smart AI allies, and epic boss battles!
 
 ## How to Play
 
@@ -51,11 +51,13 @@ A retro-futuristic space shooter game with multiple ship types, special abilitie
 
 ## Features
 
+- **Full Screen Gameplay**: Immersive full-screen experience
 - **Power-up Stacking**: Collect multiple power-ups that persist until you're hit
-- **Infiltrator Enemies**: Special enemies that appear behind you and attack other enemies
+- **Smart Infiltrator Allies**: AI ships that appear behind you and intelligently attack enemies
 - **Octopus Boss**: Epic final boss with tentacle attacks and multiple phases
-- **Dynamic Difficulty**: Each level increases in challenge
+- **Balanced Difficulty**: Challenging but fair gameplay progression
 - **Retro Sound Effects**: Generated using Web Audio API
+- **6 Unique Ships**: Each with distinct abilities and playstyles
 
 ## Power-ups
 

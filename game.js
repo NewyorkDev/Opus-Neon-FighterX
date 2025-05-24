@@ -3,17 +3,24 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const gameContainer = document.getElementById('gameContainer');
 
-canvas.width = 800;
-canvas.height = 600;
+// Set canvas to full screen
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
 
 // Create starfield background
-for (let i = 0; i < 50; i++) {
+for (let i = 0; i < 100; i++) {
     const star = document.createElement('div');
     star.className = 'star';
     star.style.width = Math.random() * 3 + 'px';
     star.style.height = star.style.width;
-    star.style.left = Math.random() * canvas.width + 'px';
-    star.style.top = Math.random() * canvas.height + 'px';
+    star.style.left = Math.random() * window.innerWidth + 'px';
+    star.style.top = Math.random() * window.innerHeight + 'px';
     star.style.animationDelay = Math.random() * 3 + 's';
     gameContainer.appendChild(star);
 }
@@ -72,17 +79,17 @@ const shipTypes = {
     opus: {
         name: 'OPUS',
         speed: 5,
-        maxHealth: 5,
-        health: 5,
-        fireRate: 250,
+        maxHealth: 4,
+        health: 4,
+        fireRate: 300,
         color: '#ff8800',
         special: 'pulseCannon',
-        specialCooldown: 12000,
+        specialCooldown: 8000,
         width: 60,
         height: 45,
         image: 'assets/ships/opus.png',
-        stats: { speed: 60, shield: 60, power: 100 },
-        description: 'Fires a devastating pulse cannon'
+        stats: { speed: 60, shield: 60, power: 85 },
+        description: 'Fires a pulse cannon wave'
     },
     striker: {
         name: 'STRIKER',
@@ -244,8 +251,8 @@ let charging = false;
 
 // Player object
 let player = {
-    x: canvas.width / 2 - 30,
-    y: canvas.height - 80,
+    x: window.innerWidth / 2 - 30,
+    y: window.innerHeight - 80,
     width: 60,
     height: 40,
     speed: 5,
@@ -473,19 +480,25 @@ function createEnemies(level) {
     
     // Add infiltrators on level 2+
     if (level >= 2) {
-        infiltrators.push({
-            x: canvas.width / 2,
-            y: -50,
-            width: 50,
-            height: 40,
-            health: 4,
-            speed: 1.5,
-            state: 'entering',
-            shootTimer: 0,
-            rapidFireTime: 0,
-            color: '#8800ff',
-            image: 'assets/enemies/infiltrator.png'
-        });
+        const infiltratorCount = level - 1;
+        for (let i = 0; i < infiltratorCount; i++) {
+            infiltrators.push({
+                x: canvas.width / 2 + (i - 0.5) * 100,
+                y: -50 - i * 100,
+                width: 50,
+                height: 40,
+                health: 3 + level,
+                speed: 1.5,
+                state: 'entering',
+                shootTimer: 0,
+                rapidFireTime: 0,
+                burstCount: 0,
+                targetingEnemies: true,
+                color: '#8800ff',
+                image: 'assets/enemies/infiltrator.png',
+                weaponLevel: level
+            });
+        }
     }
 }
 
@@ -496,9 +509,9 @@ function createBoss() {
         y: -200,
         width: 300,
         height: 250,
-        health: 100,
-        maxHealth: 100,
-        speed: 1.5,
+        health: 60,
+        maxHealth: 60,
+        speed: 1,
         direction: 1,
         shootTimer: 0,
         tentacleTimer: 0,
@@ -534,13 +547,13 @@ function playerShoot() {
     if (hasLaser) {
         playerBullets.push({
             x: player.x + player.width / 2 - 10,
-            y: player.y,
+            y: 0,
             width: 20,
-            height: canvas.height,
+            height: player.y,
             speed: 0,
             damage: damage * 2,
             laser: true,
-            life: 10
+            life: 15
         });
     } else if (hasTripleShot) {
         playerBullets.push(
@@ -583,20 +596,19 @@ function fireChargedPlasma() {
 function firePulseCannon() {
     playPulseCannonSound();
     
-    for (let i = -2; i <= 2; i++) {
-        setTimeout(() => {
-            playerBullets.push({
-                x: player.x + player.width / 2 - 15,
-                y: player.y,
-                width: 30,
-                height: 30,
-                speed: 12,
-                damage: 3,
-                pulse: true,
-                color: '#ff8800',
-                angle: i * 0.1
-            });
-        }, Math.abs(i) * 100);
+    // Fire 3 pulse shots in a spread
+    for (let i = -1; i <= 1; i++) {
+        playerBullets.push({
+            x: player.x + player.width / 2 - 10,
+            y: player.y,
+            width: 20,
+            height: 20,
+            speed: 10,
+            damage: 2,
+            pulse: true,
+            color: '#ff8800',
+            angle: i * 0.3
+        });
     }
 }
 
@@ -780,24 +792,29 @@ function update() {
                 shouldDrop = true;
             }
             
-            if (enemy.y + enemy.height >= player.y - 20) {
+            if (enemy.y + enemy.height >= canvas.height - 100) {
                 gameOver('The aliens have invaded!');
             }
             
-            // Enemy shooting
-            if (enemy.type === 'shooter' || (Math.random() < 0.001 * currentLevel)) {
-                enemy.shootTimer--;
-                if (enemy.shootTimer <= 0) {
-                    enemyBullets.push({
-                        x: enemy.x + enemy.width / 2 - 4,
-                        y: enemy.y + enemy.height,
-                        width: 8,
-                        height: 8,
-                        speed: 3,
-                        circular: true
-                    });
-                    enemy.shootTimer = 100 + Math.random() * 100;
-                }
+            // Enemy shooting (reduced frequency)
+            if (enemy.type === 'shooter' && Math.random() < 0.008) {
+                enemyBullets.push({
+                    x: enemy.x + enemy.width / 2 - 4,
+                    y: enemy.y + enemy.height,
+                    width: 6,
+                    height: 6,
+                    speed: 2,
+                    circular: true
+                });
+            } else if (Math.random() < 0.0005 * currentLevel) {
+                enemyBullets.push({
+                    x: enemy.x + enemy.width / 2 - 3,
+                    y: enemy.y + enemy.height,
+                    width: 6,
+                    height: 6,
+                    speed: 2,
+                    circular: true
+                });
             }
         });
         
@@ -849,53 +866,106 @@ function update() {
         infiltrators.forEach(infiltrator => {
             if (infiltrator.state === 'entering') {
                 infiltrator.y += infiltrator.speed;
-                if (infiltrator.y >= player.y - 150) {
-                    infiltrator.state = 'behind';
-                    infiltrator.y = player.y;
+                if (infiltrator.y >= canvas.height * 0.7) {
+                    infiltrator.state = 'positioning';
                 }
-            } else if (infiltrator.state === 'behind') {
-                // Move behind player
-                const targetX = player.x + player.width / 2;
-                const dx = targetX - infiltrator.x;
-                infiltrator.x += Math.sign(dx) * Math.min(Math.abs(dx), infiltrator.speed * 2);
+            } else if (infiltrator.state === 'positioning') {
+                // Move to behind player formation
+                const targetX = player.x + player.width / 2 - infiltrator.width / 2;
+                const targetY = player.y + 50;
                 
-                // Rapid fire at middle enemies
+                const dx = targetX - infiltrator.x;
+                const dy = targetY - infiltrator.y;
+                
+                infiltrator.x += Math.sign(dx) * Math.min(Math.abs(dx), infiltrator.speed * 1.5);
+                infiltrator.y += Math.sign(dy) * Math.min(Math.abs(dy), infiltrator.speed);
+                
+                if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+                    infiltrator.state = 'combat';
+                    infiltrator.rapidFireTime = 0;
+                }
+            } else if (infiltrator.state === 'combat') {
+                // Stay behind player but maintain some distance
+                const targetX = player.x + player.width / 2 - infiltrator.width / 2;
+                const dx = targetX - infiltrator.x;
+                infiltrator.x += Math.sign(dx) * Math.min(Math.abs(dx), infiltrator.speed * 0.8);
+                
+                // Smart targeting system
                 infiltrator.rapidFireTime++;
-                if (infiltrator.rapidFireTime > 30) {
-                    infiltrator.shootTimer++;
-                    if (infiltrator.shootTimer > 10) {
-                        // Shoot at random enemy
-                        if (enemies.length > 0) {
-                            const target = enemies[Math.floor(Math.random() * enemies.length)];
-                            const angle = Math.atan2(target.y - infiltrator.y, target.x - infiltrator.x);
-                            playerBullets.push({
-                                x: infiltrator.x + infiltrator.width / 2,
-                                y: infiltrator.y,
-                                width: 6,
-                                height: 6,
-                                speed: 8,
-                                damage: 1,
-                                angle: Math.cos(angle) * 8,
-                                angleY: Math.sin(angle) * 8,
-                                fromInfiltrator: true,
-                                color: '#8800ff'
-                            });
+                
+                if (infiltrator.targetingEnemies && enemies.length > 0) {
+                    // Target middle enemies first (most dangerous to player)
+                    const centerEnemies = enemies.filter(enemy => 
+                        enemy.x > canvas.width * 0.3 && enemy.x < canvas.width * 0.7
+                    );
+                    const targets = centerEnemies.length > 0 ? centerEnemies : enemies;
+                    
+                    if (infiltrator.rapidFireTime % 20 === 0) {
+                        // Pick closest enemy to player
+                        let closestEnemy = targets[0];
+                        let minDist = Infinity;
+                        
+                        targets.forEach(enemy => {
+                            const dist = Math.abs(enemy.y - player.y);
+                            if (dist < minDist) {
+                                minDist = dist;
+                                closestEnemy = enemy;
+                            }
+                        });
+                        
+                        if (closestEnemy) {
+                            // Fire weapon based on weapon level
+                            if (infiltrator.weaponLevel >= 3) {
+                                // Level 3: Spread shot
+                                for (let i = -1; i <= 1; i++) {
+                                    playerBullets.push({
+                                        x: infiltrator.x + infiltrator.width / 2,
+                                        y: infiltrator.y,
+                                        width: 8,
+                                        height: 8,
+                                        speed: 12,
+                                        damage: 2,
+                                        angle: i * 0.2,
+                                        fromInfiltrator: true,
+                                        color: '#ff0066'
+                                    });
+                                }
+                            } else {
+                                // Level 2: Single shot
+                                const angle = Math.atan2(closestEnemy.y - infiltrator.y, closestEnemy.x - infiltrator.x);
+                                playerBullets.push({
+                                    x: infiltrator.x + infiltrator.width / 2,
+                                    y: infiltrator.y,
+                                    width: 6,
+                                    height: 6,
+                                    speed: 10,
+                                    damage: 1,
+                                    angle: Math.cos(angle) * 10,
+                                    angleY: Math.sin(angle) * 10,
+                                    fromInfiltrator: true,
+                                    color: '#8800ff'
+                                });
+                            }
                         }
-                        infiltrator.shootTimer = 0;
                     }
                 }
                 
-                // Occasionally shoot at player
-                if (Math.random() < 0.01 && !player.invisible) {
+                // Occasionally attack player (less frequently)
+                if (Math.random() < 0.005 && !player.invisible) {
                     enemyBullets.push({
                         x: infiltrator.x + infiltrator.width / 2,
                         y: infiltrator.y,
-                        width: 8,
-                        height: 8,
-                        speed: -4,
+                        width: 6,
+                        height: 6,
+                        speed: 3,
                         circular: true,
-                        color: '#8800ff'
+                        color: '#ff0066'
                     });
+                }
+                
+                // Switch targeting if no enemies left
+                if (enemies.length === 0) {
+                    infiltrator.targetingEnemies = false;
                 }
             }
         });
@@ -935,72 +1005,51 @@ function update() {
             });
             
             boss.shootTimer++;
-            if (boss.shootTimer > 60) {
+            if (boss.shootTimer > 120) { // Slower attack rate
                 const healthRatio = boss.health / boss.maxHealth;
                 
                 if (healthRatio > 0.66) {
-                    // Phase 1: Ink spray
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (i / 8) * Math.PI * 2;
+                    // Phase 1: Ink spray (reduced bullets)
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i / 5) * Math.PI + Math.PI * 0.5;
                         enemyBullets.push({
                             x: boss.x + boss.width / 2,
                             y: boss.y + boss.height / 2,
-                            width: 12,
-                            height: 12,
-                            speed: 3,
-                            angle: Math.cos(angle) * 3,
+                            width: 10,
+                            height: 10,
+                            speed: 2,
+                            angle: Math.cos(angle) * 2,
                             circular: true,
                             color: '#00ff00'
                         });
                     }
                 } else if (healthRatio > 0.33) {
-                    // Phase 2: Tentacle whip + homing
-                    boss.tentacles.forEach((tentacle, i) => {
-                        if (i % 2 === 0) {
-                            tentacle.targetLength = 200;
-                            tentacle.speed = 0.1;
-                        }
-                    });
-                    
-                    for (let i = 0; i < 3; i++) {
+                    // Phase 2: Homing missiles (fewer)
+                    for (let i = 0; i < 2; i++) {
                         enemyBullets.push({
-                            x: boss.x + boss.width / 2 + (i - 1) * 50,
+                            x: boss.x + boss.width / 2 + (i - 0.5) * 80,
                             y: boss.y + boss.height,
-                            width: 10,
-                            height: 10,
-                            speed: 2,
+                            width: 8,
+                            height: 8,
+                            speed: 1.5,
                             circular: true,
                             homing: true,
                             color: '#88ff00'
                         });
                     }
                 } else {
-                    // Phase 3: Bullet hell
-                    for (let i = 0; i < 16; i++) {
-                        const angle = (i / 16) * Math.PI * 2 + Date.now() * 0.001;
+                    // Phase 3: Spread pattern (not bullet hell)
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (i / 8) * Math.PI * 2;
                         enemyBullets.push({
                             x: boss.x + boss.width / 2,
                             y: boss.y + boss.height / 2,
-                            width: 8,
-                            height: 8,
-                            speed: 4,
-                            angle: Math.cos(angle) * 4,
+                            width: 6,
+                            height: 6,
+                            speed: 2.5,
+                            angle: Math.cos(angle) * 2.5,
                             circular: true,
                             color: '#ffff00'
-                        });
-                    }
-                    
-                    // Spawn minions
-                    if (Math.random() < 0.02) {
-                        enemies.push({
-                            x: boss.x + Math.random() * boss.width,
-                            y: boss.y + boss.height,
-                            width: 30,
-                            height: 30,
-                            type: 'basic',
-                            health: 1,
-                            maxHealth: 1,
-                            shootTimer: 0
                         });
                     }
                 }
@@ -1013,7 +1062,9 @@ function update() {
     playerBullets.forEach((bullet, bulletIndex) => {
         if (bullet.fromInfiltrator) {
             bullet.x += bullet.angle || 0;
-            bullet.y += bullet.angleY || bullet.speed;
+            bullet.y += bullet.angleY || -bullet.speed;
+        } else if (bullet.angle && !bullet.laser && !bullet.pulse) {
+            bullet.x += bullet.angle * bullet.speed;
         }
         
         // Check normal enemies
@@ -1410,8 +1461,8 @@ function render() {
     playerBullets.forEach(bullet => {
         if (bullet.laser) {
             ctx.fillStyle = '#ff0000';
-            ctx.globalAlpha = bullet.life / 10;
-            ctx.fillRect(bullet.x, 0, bullet.width, player.y);
+            ctx.globalAlpha = bullet.life / 15;
+            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
             ctx.globalAlpha = 1;
         } else if (bullet.pulse) {
             ctx.fillStyle = bullet.color;
